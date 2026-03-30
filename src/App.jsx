@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useGame } from './context/GameContext';
 import Landing from './pages/Landing';
@@ -16,6 +16,7 @@ import Toast from './components/Toast';
 function App() {
   const { user, isAdmin } = useAuth();
   const { toast } = useGame();
+  const location = useLocation();
 
   return (
     <>
@@ -31,7 +32,7 @@ function App() {
         <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
         <Route path="/admin/*" element={isAdmin ? <AdminDashboard /> : <Navigate to="/" />} />
       </Routes>
-      {user && !window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/park/') && window.location.pathname !== '/' && <BottomNav />}
+      {user && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/park/') && location.pathname !== '/' && <BottomNav />}
     </>
   );
 }
