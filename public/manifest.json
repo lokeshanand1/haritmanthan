@@ -1,0 +1,14 @@
+{
+  "name": "EcoGuardian",
+  "short_name": "EcoGuardian",
+  "description": "Gamified park exploration. Claim territory, report issues, earn points.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1a0f",
+  "theme_color": "#0a1a0f",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,305 @@
+.lb-page {
+  background: var(--color-bg-primary);
+}
+
+/* Your Rank Card */
+.your-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(6, 182, 212, 0.08));
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+
+.rank-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rank-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+}
+
+.rank-info h3 {
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.rank-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+/* Tabs */
+.lb-tabs {
+  display: flex;
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.lb-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  transition: all 200ms ease;
+}
+
+.lb-tab.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* Podium */
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 16px 0;
+}
+
+.podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  min-width: 90px;
+  transition: all 200ms ease;
+}
+
+.podium-1 {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), var(--color-surface));
+  order: 2;
+  padding: 20px 16px;
+}
+
+.podium-2 { order: 1; }
+.podium-3 { order: 3; }
+
+.podium-you {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.2);
+}
+
+.podium-medal {
+  font-size: 1.5rem;
+}
+
+.podium-avatar {
+  font-size: 1.8rem;
+}
+
+.podium-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.podium-pts {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+}
+
+/* Full List */
+.lb-row-full {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+}
+
+.lb-row-you {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.lb-rank-num {
+  min-width: 32px;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  font-size: 0.85rem;
+}
+
+.lb-a { font-size: 1.3rem; }
+
+.lb-inf {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-n {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.lb-s {
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.lb-p {
+  font-weight: 800;
+  color: var(--color-primary);
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Challenges */
+.challenges-list h3 {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+}
+
+.challenge-card {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--color-border);
+}
+
+.challenge-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.challenge-icon {
+  font-size: 1.5rem;
+}
+
+.challenge-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.challenge-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.challenge-reward {
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.challenge-done {
+  font-size: 1.2rem;
+}
+
+.challenge-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.challenge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  border-radius: 3px;
+  transition: width 500ms ease;
+}
+
+.challenge-progress {
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+}
+
+/* Badges */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.badge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  text-align: center;
+  transition: all 200ms ease;
+  position: relative;
+}
+
+.badge-card.locked {
+  opacity: 0.4;
+  filter: grayscale(60%);
+}
+
+.badge-card.earned {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.badge-icon {
+  font-size: 2rem;
+}
+
+.badge-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.badge-desc {
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  line-height: 1.3;
+}
+
+.badge-earned-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--color-accent-gold);
+  background: rgba(245, 158, 11, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+}

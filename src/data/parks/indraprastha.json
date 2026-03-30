@@ -1,0 +1,57 @@
+{
+  "parkId": "indraprastha-park",
+  "name": "Indraprastha Park",
+  "nameHi": "इन्द्रप्रस्थ पार्क",
+  "city": "New Delhi",
+  "area_hectares": 28,
+  "managed_by": "DDA",
+  "facilities": ["walking_track", "pond", "amphitheatre", "rose_garden", "playground", "food_court"],
+  "entry_points": [
+    { "id": "gate-1", "name": "Main Gate (Mathura Road)", "coordinates": [28.6175, 77.2455] },
+    { "id": "gate-2", "name": "Gate 2 (Purana Qila Road)", "coordinates": [28.6190, 77.2480] }
+  ],
+  "zones": [
+    { "id": "walking-track", "name": "Walking Track", "nameHi": "वॉकिंग ट्रैक", "type": "path", "color": "#22c55e" },
+    { "id": "rose-garden", "name": "Rose Garden", "nameHi": "गुलाब बगीचा", "type": "garden", "color": "#f43f5e" },
+    { "id": "pond", "name": "Boating Pond", "nameHi": "नौका तालाब", "type": "water", "color": "#3b82f6" },
+    { "id": "playground", "name": "Children's Playground", "nameHi": "खेल का मैदान", "type": "recreation", "color": "#f59e0b" },
+    { "id": "amphitheatre", "name": "Amphitheatre", "nameHi": "एम्फीथिएटर", "type": "structure", "color": "#8b5cf6" },
+    { "id": "food-court", "name": "Food Court", "nameHi": "फ़ूड कोर्ट", "type": "amenity", "color": "#f97316" }
+  ],
+  "boundary": {
+    "type": "Feature",
+    "properties": { "name": "Indraprastha Park" },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[
+        [77.2430, 28.6150],
+        [77.2435, 28.6175],
+        [77.2440, 28.6195],
+        [77.2450, 28.6208],
+        [77.2465, 28.6215],
+        [77.2480, 28.6218],
+        [77.2495, 28.6215],
+        [77.2510, 28.6205],
+        [77.2518, 28.6192],
+        [77.2522, 28.6175],
+        [77.2520, 28.6158],
+        [77.2512, 28.6142],
+        [77.2500, 28.6132],
+        [77.2485, 28.6128],
+        [77.2468, 28.6130],
+        [77.2452, 28.6135],
+        [77.2438, 28.6142],
+        [77.2430, 28.6150]
+      ]]
+    }
+  },
+  "center": [28.6175, 77.2475],
+  "zoom": 16,
+  "poi": [
+    { "id": "bench-1", "type": "bench", "coordinates": [28.6168, 77.2460], "name": "Bench near entrance" },
+    { "id": "fountain-1", "type": "water_fountain", "coordinates": [28.6180, 77.2465], "name": "Drinking Water" },
+    { "id": "toilet-1", "type": "restroom", "coordinates": [28.6172, 77.2490], "name": "Public Restroom" },
+    { "id": "tree-banyan", "type": "notable_tree", "coordinates": [28.6185, 77.2475], "name": "Ancient Banyan Tree" },
+    { "id": "guard-post", "type": "security", "coordinates": [28.6175, 77.2455], "name": "Security Post" }
+  ]
+}
