@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
 import { useGame } from '../context/GameContext';
 import { useLang } from '../context/LanguageContext';
@@ -396,6 +397,22 @@ export default function ParkMap() {
             </Popup>
           </CircleMarker>
         ))}
+
+        {/* Today's Creative Area Marker */}
+        <Marker
+          position={[28.6145, 77.2485]}
+          icon={L.divIcon({
+            html: '<div style="font-size: 28px; line-height: 1; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); transform: translateY(-50%);">🎨</div>',
+            className: 'creativity-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+          })}
+        >
+          <Popup>
+            <strong>Today's creative area</strong><br/>
+            Artists can make and show their painting there, singers can jam, and others can join.
+          </Popup>
+        </Marker>
 
         <MapUpdater center={userPosition} />
       </MapContainer>
