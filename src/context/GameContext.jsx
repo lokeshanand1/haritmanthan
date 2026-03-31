@@ -168,6 +168,15 @@ const DAILY_CHALLENGES = [
   { id: 'dc5', title: 'Spend 30 min in park', titleHi: 'पार्क में 30 मिन बिताएं', icon: '⏱️', target: 30, type: 'time', reward: 60 },
 ];
 
+const INITIAL_PODS = [
+  { id: 'T001', type: 'tree', lat: 28.6180, lng: 77.2470, totalScans: 42, lastScanned: null, currentCO2Absorbed: 4.2 },
+  { id: 'T002', type: 'tree', lat: 28.6190, lng: 77.2480, totalScans: 15, lastScanned: null, currentCO2Absorbed: 3.5 },
+  { id: 'B001', type: 'bench', lat: 28.6175, lng: 77.2465, totalScans: 89, lastScanned: null, currentTemp: 28 },
+  { id: 'A001', type: 'air', lat: 28.6195, lng: 77.2490, totalScans: 12, lastScanned: null, currentPM25: 35 },
+  { id: 'P001', type: 'pond', lat: 28.6185, lng: 77.2485, totalScans: 56, lastScanned: null, currentTemp: 24, biodiversity: 7.2 },
+  { id: 'E001', type: 'energy', lat: 28.6172, lng: 77.2458, totalScans: 110, lastScanned: null, energyGenerated: 0.5 },
+];
+
 // ─── Provider ────────────────────────────────────────────────
 
 export function GameProvider({ children }) {
@@ -219,6 +228,12 @@ export function GameProvider({ children }) {
     return [];
   });
 
+  const [pods, setPods] = useState(() => {
+    const saved = localStorage.getItem('eco_pods');
+    if (saved) try { return JSON.parse(saved); } catch { }
+    return INITIAL_PODS;
+  });
+
   const [leaderboard] = useState(INITIAL_LEADERBOARD);
   const [isInsidePark, setIsInsidePark] = useState(false);
   const [userPosition, setUserPosition] = useState(null);
@@ -231,6 +246,7 @@ export function GameProvider({ children }) {
   useEffect(() => { localStorage.setItem('eco_reports', JSON.stringify(reports)); }, [reports]);
   useEffect(() => { localStorage.setItem('eco_eco_actions', JSON.stringify(ecoActions)); }, [ecoActions]);
   useEffect(() => { localStorage.setItem('eco_safety', JSON.stringify(safetyRatings)); }, [safetyRatings]);
+  useEffect(() => { localStorage.setItem('eco_pods', JSON.stringify(pods)); }, [pods]);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -382,6 +398,34 @@ export function GameProvider({ children }) {
     showToast('+5 points for safety rating!', 'success');
   }, [showToast]);
 
+  // ─── Pod Scanning ──────────────────────────────────────────
+  const scanPod = useCallback((podId) => {
+    const pod = pods.find(p => p.id === podId);
+    if (!pod) return null;
+
+    // Time-throttle: only get points once per hour per pod
+    const now = Date.now();
+    if (pod.lastScanned && (now - pod.lastScanned < 3600000)) {
+       showToast(`You already scanned this pod recently. Try again later!`, 'info');
+       return pod; // Still return pod to view AR, but no points
+    }
+
+    const pointsMap = { tree: 20, bench: 15, air: 25, pond: 30, energy: 10 };
+    const points = pointsMap[pod.type] || 10;
+
+    setUserStats(prev => ({
+      ...prev,
+      points: prev.points + points,
+    }));
+
+    setPods(prev => prev.map(p => 
+      p.id === podId ? { ...p, totalScans: p.totalScans + 1, lastScanned: now } : p
+    ));
+
+    showToast(`Scanned Pod! +${points} pts`, 'success');
+    return { ...pod, pointsAwarded: points };
+  }, [pods, showToast]);
+
   // ─── Geofence ──────────────────────────────────────────────
   const checkInsidePark = useCallback((lat, lng) => {
     const coords = park.boundary.geometry.coordinates[0];
@@ -416,12 +460,12 @@ export function GameProvider({ children }) {
   return (
     <GameContext.Provider value={{
       park, territories, currentPath, safetyRatings,
-      userStats, reports, ecoActions, leaderboard,
+      userStats, reports, ecoActions, leaderboard, pods,
       isInsidePark, userPosition, toast, sessionStart,
       badges: BADGES, dailyChallenges: DAILY_CHALLENGES,
       setIsInsidePark, setUserPosition, setSessionStart,
       addPathPoint, clearPath,
-      addReport, addEcoAction, rateSafety,
+      addReport, addEcoAction, rateSafety, scanPod,
       checkInsidePark, getUserRank, getTerritoryStatus,
       showToast, updateReportStatus,
     }}>

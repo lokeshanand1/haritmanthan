@@ -23,7 +23,7 @@ export default function ParkMap() {
     isInsidePark, userPosition,
     setIsInsidePark, setUserPosition, setSessionStart,
     addPathPoint, clearPath, checkInsidePark,
-    getTerritoryStatus, showToast
+    getTerritoryStatus, showToast, pods
   } = useGame();
   const navigate = useNavigate();
 
@@ -377,6 +377,26 @@ export default function ParkMap() {
           </CircleMarker>
         ))}
 
+        {/* Pod Markers */}
+        {pods.map(pod => (
+          <CircleMarker
+            key={pod.id}
+            center={[pod.lat, pod.lng]}
+            radius={8}
+            pathOptions={{
+              fillColor: '#06b6d4', // Cyan
+              fillOpacity: 0.9,
+              color: '#fff',
+              weight: 2,
+            }}
+          >
+            <Popup>
+              <strong>{pod.type.toUpperCase()} POD ({pod.id})</strong><br />
+              Total Scans: {pod.totalScans}
+            </Popup>
+          </CircleMarker>
+        ))}
+
         <MapUpdater center={userPosition} />
       </MapContainer>
 
@@ -429,6 +449,10 @@ export default function ParkMap() {
         <div className="legend-item">
           <span className="legend-color" style={{ background: 'transparent', border: '2px dashed #22c55e' }}></span>
           <span>Your Trail</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color" style={{ background: '#06b6d4', border: '2px solid #fff', borderRadius: '50%' }}></span>
+          <span>Eco Pod</span>
         </div>
       </div>
 
