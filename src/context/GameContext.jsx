@@ -124,7 +124,9 @@ const INITIAL_TERRITORIES = [
       [28.6170, 77.2478], [28.6174, 77.2475], [28.6178, 77.2479],
       [28.6176, 77.2485], [28.6171, 77.2484], [28.6170, 77.2478],
     ],
-    owners: [{ userId: 'user-004', displayName: 'Park Ranger', claimedAt: Date.now() - 1200000, expiresAt: Date.now() + 22 * 3600000 }],
+    owners: [
+      { userId: 'user-004', displayName: 'Park Ranger', claimedAt: Date.now() - 1200000, expiresAt: Date.now() + 22 * 3600000 }
+    ],
     area_m2: 1600,
   },
 ];
@@ -185,8 +187,26 @@ export function GameProvider({ children }) {
   // Territories: array of { id, polygon: [[lat,lng],...], owners: [...], area_m2 }
   const [territories, setTerritories] = useState(() => {
     const saved = localStorage.getItem('eco_territories');
-    if (saved) try { return JSON.parse(saved); } catch { }
-    return INITIAL_TERRITORIES;
+    let savedTerritories = [];
+    if (saved) {
+      try { savedTerritories = JSON.parse(saved); } catch { }
+    }
+    
+    // Refresh demo territories to always be active
+    const now = Date.now();
+    const demoTerritories = INITIAL_TERRITORIES.map(t => ({
+      ...t,
+      owners: t.owners.map(o => ({
+        ...o,
+        claimedAt: now - 3600000,
+        expiresAt: now + 24 * 3600000
+      }))
+    }));
+    
+    const demoIds = new Set(demoTerritories.map(t => t.id));
+    const userTerritories = savedTerritories.filter(t => !demoIds.has(t.id));
+    
+    return [...demoTerritories, ...userTerritories];
   });
 
   // Current walking trail (not yet closed into a loop)
@@ -285,22 +305,8 @@ export function GameProvider({ children }) {
             // Remove expired owners
             const activeOwners = t.owners.filter(o => o.expiresAt > now);
             if (activeOwners.length === 0) return null; // expired territory
-            // Check overlap
-            if (polygonsOverlap(simplified, t.polygon)) {
-              // Add current user as co-owner if not already
-              if (!activeOwners.some(o => o.userId === user.uid)) {
-                return {
-                  ...t,
-                  owners: [...activeOwners, {
-                    userId: user.uid,
-                    displayName: user.displayName,
-                    claimedAt: Date.now(),
-                    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-                  }]
-                };
-              }
-              return { ...t, owners: activeOwners };
-            }
+            
+            // Do not naively assign full ownership on overlap; rely on true geometry rendering
             return { ...t, owners: activeOwners };
           }).filter(Boolean);
 

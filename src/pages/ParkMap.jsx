@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Marker, Popup, useMap, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
+import * as turf from '@turf/turf';
 import { useAuth } from '../context/AuthContext';
 import { useGame } from '../context/GameContext';
 import { useLang } from '../context/LanguageContext';
@@ -229,6 +230,78 @@ export default function ParkMap() {
   );
   const totalArea = myTerritories.reduce((sum, t) => sum + t.area_m2, 0);
 
+  // Use Turf.js to geometrically intersect 'mine' and 'other' territories
+  const displayFeatures = useMemo(() => {
+    if (!user || !territories || territories.length === 0) return [];
+    
+    const myPolys = [];
+    const otherPolys = [];
+    const now = Date.now();
+
+    territories.forEach(t => {
+      const active = t.owners.filter(o => o.expiresAt > now);
+      if (active.length === 0) return;
+      
+      let coords = t.polygon.map(p => [p[1], p[0]]); // turf needs [lng, lat]
+      if (coords[0][0] !== coords[coords.length-1][0] || coords[0][1] !== coords[coords.length-1][1]) {
+        coords.push([...coords[0]]); // Ensure closed path
+      }
+      
+      if (coords.length < 4) return; // Need at least 4 points to make a valid polygon
+
+      try {
+        const poly = turf.polygon([coords], { originalId: t.id });
+        const isMine = active.some(o => o.userId === user.uid);
+        const isOther = active.some(o => o.userId !== user.uid);
+        
+        // If it's already mixed co-owners in GameContext, put it in both buckets so turf can intersect it.
+        if (isMine) myPolys.push(poly);
+        if (isOther) otherPolys.push(poly);
+      } catch (e) {
+        console.warn("Invalid turf polygon generated from territory", t.id);
+      }
+    });
+
+    let finalMine = null;
+    let finalOther = null;
+    let intersection = null;
+
+    if (myPolys.length > 0) {
+      finalMine = myPolys.length === 1 ? myPolys[0] : turf.union(turf.featureCollection(myPolys));
+    }
+    if (otherPolys.length > 0) {
+      finalOther = otherPolys.length === 1 ? otherPolys[0] : turf.union(turf.featureCollection(otherPolys));
+    }
+
+    if (finalMine && finalOther) {
+      intersection = turf.intersect(turf.featureCollection([finalMine, finalOther]));
+      if (intersection) {
+        finalMine = turf.difference(turf.featureCollection([finalMine, intersection]));
+        finalOther = turf.difference(turf.featureCollection([finalOther, intersection]));
+      }
+    }
+
+    const results = [];
+    if (finalMine) results.push({ feature: finalMine, type: 'owned' });
+    if (finalOther) results.push({ feature: finalOther, type: 'other' });
+    if (intersection) results.push({ feature: intersection, type: 'co-owned' });
+
+    return results;
+  }, [territories, user]);
+
+  // Provide a generic label since we merged polys
+  const getGeoJsonLabel = (type) => {
+    return (
+      <div className="territory-popup">
+        <div className="tp-status">
+          {type === 'owned' && '✅ Your Territory'}
+          {type === 'co-owned' && '👥 Co-owned Territory'}
+          {type === 'other' && '🔵 Claimed by Others'}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="map-page">
       {/* Status Bar */}
@@ -280,25 +353,33 @@ export default function ParkMap() {
           }}
         />
 
-        {/* Claimed Territories (filled polygons) */}
-        {territories.map(territory => {
-          const active = territory.owners.filter(o => o.expiresAt > now);
-          if (active.length === 0) return null;
-          const colors = getTerritoryColor(territory);
+        {/* Computed Non-overlapping Turf Layer Territories */}
+        {displayFeatures.map((df, idx) => {
+          if (!df.feature) return null;
+          
+          let fillColor, color, dashArray;
+          if (df.type === 'owned') {
+            fillColor = 'rgba(34, 197, 94, 0.35)'; color = '#22c55e';
+          } else if (df.type === 'co-owned') {
+            fillColor = 'rgba(139, 92, 246, 0.35)'; color = '#8b5cf6'; dashArray = '6 3';
+          } else {
+            fillColor = 'rgba(59, 130, 246, 0.25)'; color = '#3b82f6';
+          }
+
           return (
-            <Polygon
-              key={territory.id}
-              positions={territory.polygon}
-              pathOptions={{
-                fillColor: colors.fill,
+            <GeoJSON
+              key={`territory-layer-${idx}-${df.type}`}
+              data={df.feature}
+              style={{
+                fillColor,
                 fillOpacity: 1,
-                color: colors.border,
+                color,
                 weight: 2,
-                dashArray: getTerritoryStatus(territory, user.uid) === 'co-owned' ? '6 3' : undefined,
+                dashArray
               }}
             >
-              <Popup>{getTerritoryLabel(territory)}</Popup>
-            </Polygon>
+              <Popup>{getGeoJsonLabel(df.type)}</Popup>
+            </GeoJSON>
           );
         })}
 
