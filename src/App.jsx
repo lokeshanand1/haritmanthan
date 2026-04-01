@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import QRLeaderboard from './pages/QRLeaderboard';
 import ParkMap from './pages/ParkMap';
 import Report from './pages/Report';
+import BountyMap from './pages/BountyMap';
 import EcoActions from './pages/EcoActions';
 import Safety from './pages/Safety';
 import Leaderboard from './pages/Leaderboard';
@@ -27,6 +28,7 @@ function App() {
         <Route path="/park/:parkId" element={<QRLeaderboard />} />
         <Route path="/map" element={user ? <ParkMap /> : <Navigate to="/" />} />
         <Route path="/report" element={user ? <Report /> : <Navigate to="/" />} />
+        <Route path="/bounties" element={user ? <BountyMap /> : <Navigate to="/" />} />
         <Route path="/eco-actions" element={user ? <EcoActions /> : <Navigate to="/" />} />
         <Route path="/safety" element={user ? <Safety /> : <Navigate to="/" />} />
         <Route path="/leaderboard" element={user ? <Leaderboard /> : <Navigate to="/" />} />

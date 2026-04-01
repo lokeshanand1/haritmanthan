@@ -3,6 +3,29 @@ import parkData from '../data/parks/indraprastha.json';
 
 const GameContext = createContext();
 
+// ─── Service Accountability (Demo Data + Helpers) ───────────────
+
+const ISSUE_RULES = {
+  'Garbage Overflow': { category: 'Waste', slaHours: 4 },
+  'Broken Bench': { category: 'Furniture', slaHours: 48 },
+  'Damaged Light': { category: 'Electrical', slaHours: 24 },
+  'Dry Tree': { category: 'Horticulture', slaHours: 72 },
+  'Unsafe Path': { category: 'Infrastructure', slaHours: 7 * 24 },
+  Other: { category: 'Other', slaHours: 72 },
+};
+
+function classifyIssue(type) {
+  return ISSUE_RULES[type] || ISSUE_RULES.Other;
+}
+
+function addHours(ts, hours) {
+  return ts + hours * 60 * 60 * 1000;
+}
+
+function generateId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 // ─── Geometry Utilities ───────────────────────────────────────
 
 // Ray-casting point-in-polygon (lng, lat order)
@@ -145,10 +168,60 @@ const INITIAL_LEADERBOARD = [
 ];
 
 const INITIAL_REPORTS = [
-  { id: 'r1', type: 'litter', description: 'Plastic bottles near pond', lat: 28.6180, lng: 77.2470, photo: null, userId: 'user-002', userName: 'Green Walker', timestamp: Date.now() - 3600000, status: 'pending' },
-  { id: 'r2', type: 'broken_bench', description: 'Bench broken near gate', lat: 28.6172, lng: 77.2458, photo: null, userId: 'user-003', userName: 'Nature Scout', timestamp: Date.now() - 7200000, status: 'in_progress' },
-  { id: 'r3', type: 'unsafe_lighting', description: 'No lights near amphitheatre', lat: 28.6190, lng: 77.2485, photo: null, userId: 'user-004', userName: 'Park Ranger', timestamp: Date.now() - 14400000, status: 'pending' },
-  { id: 'r4', type: 'dry_tree', description: 'Large tree looks dead', lat: 28.6185, lng: 77.2492, photo: null, userId: 'user-005', userName: 'Eco Warrior', timestamp: Date.now() - 86400000, status: 'resolved' },
+  // Legacy demo reports (kept for backwards compatibility)
+  { id: 'r1', type: 'litter', description: 'Plastic bottles near pond', lat: 28.6180, lng: 77.2470, photo: null, userId: 'user-002', userName: 'Green Walker', timestamp: Date.now() - 2 * 3600000, status: 'pending' },
+  { id: 'r2', type: 'broken_bench', description: 'Bench broken near gate', lat: 28.6172, lng: 77.2458, photo: null, userId: 'user-003', userName: 'Nature Scout', timestamp: Date.now() - 6 * 3600000, status: 'in_progress' },
+  { id: 'r3', type: 'unsafe_lighting', description: 'No lights near amphitheatre', lat: 28.6190, lng: 77.2485, photo: null, userId: 'user-004', userName: 'Park Ranger', timestamp: Date.now() - 10 * 3600000, status: 'pending' },
+
+  // Service Accountability reports (new workflow statuses)
+  { id: 'r4', type: 'Garbage Overflow', description: 'Bins overflowing near entrance', lat: 28.6176, lng: 77.2462, location: { lat: 28.6176, lng: 77.2462 }, userId: 'user-002', userName: 'Green Walker', reportedAt: Date.now() - 3 * 3600000, status: 'open' },
+  { id: 'r5', type: 'Damaged Light', description: 'Streetlight flickering on main path', lat: 28.6189, lng: 77.2477, location: { lat: 28.6189, lng: 77.2477 }, userId: 'user-003', userName: 'Nature Scout', reportedAt: Date.now() - 30 * 3600000, status: 'assigned', assignedTo: 'c2' },
+  { id: 'r6', type: 'Broken Bench', description: 'Bench slats broken near pond', lat: 28.6183, lng: 77.2488, location: { lat: 28.6183, lng: 77.2488 }, userId: 'user-004', userName: 'Park Ranger', reportedAt: Date.now() - 60 * 3600000, status: 'resolved_pending_verification', assignedTo: 'c1', resolvedAt: Date.now() - 6 * 3600000 },
+  { id: 'r7', type: 'Dry Tree', description: 'Sapling is drying out near kiosk', lat: 28.6194, lng: 77.2490, location: { lat: 28.6194, lng: 77.2490 }, userId: 'user-005', userName: 'Eco Warrior', reportedAt: Date.now() - 90 * 3600000, status: 'verified', assignedTo: 'c3', resolvedAt: Date.now() - 40 * 3600000, verifiedAt: Date.now() - 30 * 3600000, verificationPhotoUrl: null },
+  { id: 'r8', type: 'Unsafe Path', description: 'Uneven tiles causing trip hazard', lat: 28.6180, lng: 77.2491, location: { lat: 28.6180, lng: 77.2491 }, userId: 'user-002', userName: 'Green Walker', reportedAt: Date.now() - 26 * 3600000, status: 'open' },
+  { id: 'r9', type: 'Garbage Overflow', description: 'Overflow behind amphitheatre', lat: 28.6192, lng: 77.2482, location: { lat: 28.6192, lng: 77.2482 }, userId: 'user-003', userName: 'Nature Scout', reportedAt: Date.now() - 8 * 3600000, status: 'assigned', assignedTo: 'c1' },
+  { id: 'r10', type: 'Other', description: 'Graffiti on wall near gate', lat: 28.6171, lng: 77.2466, location: { lat: 28.6171, lng: 77.2466 }, userId: 'user-004', userName: 'Park Ranger', reportedAt: Date.now() - 18 * 3600000, status: 'open' },
+];
+
+const INITIAL_CONTRACTORS = [
+  { contractorId: 'c1', name: 'GreenCare Pvt Ltd', contactEmail: 'ops@greencare.demo', assignedReports: [], penaltyScore: 0, totalAssigned: 0, onTimeResolutions: 0 },
+  { contractorId: 'c2', name: 'City Maintenance Co.', contactEmail: 'dispatch@citymaint.demo', assignedReports: [], penaltyScore: 0, totalAssigned: 0, onTimeResolutions: 0 },
+  { contractorId: 'c3', name: 'EcoWorks', contactEmail: 'support@ecoworks.demo', assignedReports: [], penaltyScore: 0, totalAssigned: 0, onTimeResolutions: 0 },
+];
+
+function migrateReport(r) {
+  // Keep existing fields (back-compat) while adding Service Accountability fields.
+  const reportedAt = r.reportedAt ?? r.timestamp ?? Date.now();
+  const type = r.type ?? 'Other';
+  const { category, slaHours } = r.category && r.slaHours ? { category: r.category, slaHours: r.slaHours } : classifyIssue(type);
+  const resolutionDeadline = r.resolutionDeadline ?? addHours(reportedAt, slaHours);
+  return {
+    ...r,
+    reportId: r.reportId ?? r.id ?? generateId('rep'),
+    userId: r.userId ?? 'unknown',
+    type,
+    category,
+    slaHours,
+    reportedAt,
+    status: r.status ?? 'open',
+    assignedTo: r.assignedTo ?? null,
+    resolutionDeadline,
+    resolvedAt: r.resolvedAt ?? null,
+    verifiedAt: r.verifiedAt ?? null,
+    verificationPhotoUrl: r.verificationPhotoUrl ?? null,
+    penaltyScore: r.penaltyScore ?? 0,
+  };
+}
+
+const INITIAL_BOUNTY_QUESTS = [
+  {
+    questId: 'q1',
+    reportId: 'r6',
+    location: { lat: 28.6183, lng: 77.2488 },
+    rewardPoints: 100,
+    status: 'active',
+    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+  }
 ];
 
 const BADGES = [
@@ -238,8 +311,46 @@ export function GameProvider({ children }) {
 
   const [reports, setReports] = useState(() => {
     const saved = localStorage.getItem('eco_reports');
-    if (saved) try { return JSON.parse(saved); } catch { }
-    return INITIAL_REPORTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed.map(migrateReport) : INITIAL_REPORTS.map(migrateReport);
+      } catch { }
+    }
+    return INITIAL_REPORTS.map(migrateReport);
+  });
+
+  const [contractors, setContractors] = useState(() => {
+    const saved = localStorage.getItem('eco_contractors');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) && parsed.length ? parsed : INITIAL_CONTRACTORS;
+      } catch { }
+    }
+    return INITIAL_CONTRACTORS;
+  });
+
+  const [bountyQuests, setBountyQuests] = useState(() => {
+    const saved = localStorage.getItem('eco_bounty_quests');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : INITIAL_BOUNTY_QUESTS;
+      } catch { }
+    }
+    return INITIAL_BOUNTY_QUESTS;
+  });
+
+  const [pointsEvents, setPointsEvents] = useState(() => {
+    const saved = localStorage.getItem('eco_points_events');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch { }
+    }
+    return [];
   });
 
   const [ecoActions, setEcoActions] = useState(() => {
@@ -264,6 +375,9 @@ export function GameProvider({ children }) {
   useEffect(() => { localStorage.setItem('eco_territories', JSON.stringify(territories)); }, [territories]);
   useEffect(() => { localStorage.setItem('eco_stats', JSON.stringify(userStats)); }, [userStats]);
   useEffect(() => { localStorage.setItem('eco_reports', JSON.stringify(reports)); }, [reports]);
+  useEffect(() => { localStorage.setItem('eco_contractors', JSON.stringify(contractors)); }, [contractors]);
+  useEffect(() => { localStorage.setItem('eco_bounty_quests', JSON.stringify(bountyQuests)); }, [bountyQuests]);
+  useEffect(() => { localStorage.setItem('eco_points_events', JSON.stringify(pointsEvents)); }, [pointsEvents]);
   useEffect(() => { localStorage.setItem('eco_eco_actions', JSON.stringify(ecoActions)); }, [ecoActions]);
   useEffect(() => { localStorage.setItem('eco_safety', JSON.stringify(safetyRatings)); }, [safetyRatings]);
   useEffect(() => { localStorage.setItem('eco_pods', JSON.stringify(pods)); }, [pods]);
@@ -340,14 +454,27 @@ export function GameProvider({ children }) {
 
   // ─── Reports ───────────────────────────────────────────────
   const addReport = useCallback((report, user) => {
-    const newReport = {
-      id: 'r-' + Date.now(),
+    const now = Date.now();
+    const id = generateId('rep');
+    const { category, slaHours } = classifyIssue(report.type);
+    const newReport = migrateReport({
+      id,
+      reportId: id,
       ...report,
       userId: user.uid,
       userName: user.displayName,
-      timestamp: Date.now(),
-      status: 'pending',
-    };
+      timestamp: now, // legacy
+      reportedAt: now,
+      category,
+      slaHours,
+      resolutionDeadline: addHours(now, slaHours),
+      status: 'open',
+      assignedTo: null,
+      resolvedAt: null,
+      verifiedAt: null,
+      verificationPhotoUrl: null,
+      penaltyScore: 0,
+    });
     setReports(prev => [newReport, ...prev]);
     setUserStats(prev => ({
       ...prev,
@@ -358,9 +485,127 @@ export function GameProvider({ children }) {
         reports: (prev.challengeProgress.reports || 0) + 1,
       }
     }));
+    setPointsEvents(prev => ([
+      { id: generateId('pe'), userId: user.uid, delta: 50, reason: 'report_submitted', timestamp: now },
+      ...prev
+    ]));
     showToast('+50 points for reporting!', 'success');
     return newReport;
   }, [showToast]);
+
+  const addPoints = useCallback((userId, delta, reason) => {
+    const now = Date.now();
+    setUserStats(prev => ({ ...prev, points: prev.points + delta }));
+    setPointsEvents(prev => ([
+      { id: generateId('pe'), userId, delta, reason, timestamp: now },
+      ...prev
+    ]));
+  }, []);
+
+  const assignReportToContractor = useCallback((reportId, contractorId) => {
+    setReports(prev => prev.map(r => {
+      if ((r.reportId || r.id) !== reportId) return r;
+      return { ...r, assignedTo: contractorId, status: 'assigned' };
+    }));
+    setContractors(prev => prev.map(c => {
+      if (c.contractorId !== contractorId) return c;
+      const assignedReports = Array.from(new Set([...(c.assignedReports || []), reportId]));
+      return { ...c, assignedReports, totalAssigned: (c.totalAssigned || 0) + 1 };
+    }));
+    const contractor = contractors.find(c => c.contractorId === contractorId);
+    // Demo notification
+    // eslint-disable-next-line no-console
+    console.log(`[demo] Assigned report ${reportId} to ${contractor?.name || contractorId}`);
+  }, [contractors]);
+
+  const markReportResolved = useCallback((reportId) => {
+    const now = Date.now();
+    let reportSnapshot = null;
+    setReports(prev => prev.map(r => {
+      const rid = r.reportId || r.id;
+      if (rid !== reportId) return r;
+      reportSnapshot = { ...r };
+      return { ...r, resolvedAt: now, status: 'resolved_pending_verification' };
+    }));
+    setBountyQuests(prev => {
+      if (!reportSnapshot) return prev;
+      const questId = generateId('quest');
+      const rewardPoints = 100;
+      const newQuest = {
+        questId,
+        reportId,
+        location: reportSnapshot.location || { lat: reportSnapshot.lat, lng: reportSnapshot.lng },
+        rewardPoints,
+        status: 'active',
+        expiresAt: now + 7 * 24 * 60 * 60 * 1000,
+      };
+      return [newQuest, ...prev];
+    });
+  }, []);
+
+  const submitVerification = useCallback(({ questId, reportId, verifierUserId, photoDataUrl }) => {
+    const now = Date.now();
+    setReports(prev => prev.map(r => {
+      const rid = r.reportId || r.id;
+      if (rid !== reportId) return r;
+      return {
+        ...r,
+        verifiedAt: now,
+        verificationPhotoUrl: photoDataUrl,
+        status: 'verified',
+      };
+    }));
+    setBountyQuests(prev => prev.map(q => q.questId === questId ? { ...q, status: 'completed' } : q));
+    addPoints(verifierUserId, 100, 'verification_bounty');
+    showToast('+100 points for verification bounty!', 'success');
+  }, [addPoints, showToast]);
+
+  const failVerification = useCallback(({ questId, reportId }) => {
+    const now = Date.now();
+    setBountyQuests(prev => prev.map(q => q.questId === questId ? { ...q, status: 'failed' } : q));
+    setReports(prev => prev.map(r => {
+      const rid = r.reportId || r.id;
+      if (rid !== reportId) return r;
+      const newPenalty = (r.penaltyScore || 0) + 20;
+      return {
+        ...r,
+        status: 'open',
+        assignedTo: r.assignedTo,
+        penaltyScore: newPenalty,
+        resolvedAt: null,
+        verifiedAt: null,
+        verificationPhotoUrl: null,
+      };
+    }));
+    // Create a new higher reward quest
+    setBountyQuests(prev => {
+      const prevQuest = prev.find(q => q.questId === questId);
+      const rewardPoints = Math.min(500, (prevQuest?.rewardPoints || 100) + 50);
+      const report = reports.find(r => (r.reportId || r.id) === reportId);
+      const newQuest = {
+        questId: generateId('quest'),
+        reportId,
+        location: report?.location || (report ? { lat: report.lat, lng: report.lng } : null),
+        rewardPoints,
+        status: 'active',
+        expiresAt: now + 7 * 24 * 60 * 60 * 1000,
+      };
+      return newQuest.location ? [newQuest, ...prev] : prev;
+    });
+  }, [reports]);
+
+  const applySlaPenalties = useCallback(() => {
+    const now = Date.now();
+    setReports(prev => prev.map(r => {
+      if (!r.resolutionDeadline) return r;
+      if (r.status === 'verified') return r;
+      if (r.resolvedAt) return r; // only penalize once at resolve time in dashboard computation
+      if (now <= r.resolutionDeadline) return r;
+      // If overdue and still open/assigned, add a one-time penalty marker via penaltyScore bump.
+      if (r.__slaPenalized) return r;
+      return { ...r, penaltyScore: (r.penaltyScore || 0) + 10, __slaPenalized: true };
+    }));
+  }, []);
 
   // ─── Eco Actions ───────────────────────────────────────────
   const addEcoAction = useCallback((action, user) => {
@@ -467,6 +712,7 @@ export function GameProvider({ children }) {
     <GameContext.Provider value={{
       park, territories, currentPath, safetyRatings,
       userStats, reports, ecoActions, leaderboard, pods,
+      contractors, bountyQuests, pointsEvents,
       isInsidePark, userPosition, toast, sessionStart,
       badges: BADGES, dailyChallenges: DAILY_CHALLENGES,
       setIsInsidePark, setUserPosition, setSessionStart,
@@ -474,6 +720,13 @@ export function GameProvider({ children }) {
       addReport, addEcoAction, rateSafety, scanPod,
       checkInsidePark, getUserRank, getTerritoryStatus,
       showToast, updateReportStatus,
+      classifyIssue,
+      addPoints,
+      assignReportToContractor,
+      markReportResolved,
+      submitVerification,
+      failVerification,
+      applySlaPenalties,
     }}>
       {children}
     </GameContext.Provider>

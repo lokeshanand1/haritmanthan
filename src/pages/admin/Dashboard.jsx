@@ -1,34 +1,64 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Polygon, CircleMarker, Popup } from 'react-leaflet';
 import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
 import { useLang } from '../../context/LanguageContext';
+import ContractorDashboard from './ContractorDashboard';
 import './Dashboard.css';
 
 const REPORT_ICONS = {
   litter: '🗑️', broken_bench: '🪑', dry_tree: '🌵', unsafe_lighting: '💡',
   damaged_path: '🛤️', water_leak: '💧', graffiti: '🎨', other: '❓',
+  'Garbage Overflow': '🗑️',
+  'Broken Bench': '🪑',
+  'Damaged Light': '💡',
+  'Dry Tree': '🌵',
+  'Unsafe Path': '🛤️',
+  Other: '❓',
 };
 
 const STATUS_COLORS = {
   pending: '#f59e0b',
   in_progress: '#3b82f6',
   resolved: '#22c55e',
+  open: '#ef4444',
+  assigned: '#3b82f6',
+  resolved_pending_verification: '#f59e0b',
+  verified: '#22c55e',
 };
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
-  const { park, territories, reports, ecoActions, leaderboard, updateReportStatus, safetyRatings } = useGame();
+  const {
+    park,
+    territories,
+    reports,
+    ecoActions,
+    leaderboard,
+    updateReportStatus,
+    safetyRatings,
+    contractors,
+    bountyQuests,
+    assignReportToContractor,
+    markReportResolved,
+    applySlaPenalties,
+  } = useGame();
   const { t } = useLang();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [mapOverlay, setMapOverlay] = useState('territories');
+  const [assignments, setAssignments] = useState({});
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  useEffect(() => {
+    // Hackathon-friendly SLA checks (client-side).
+    applySlaPenalties();
+  }, [applySlaPenalties]);
 
   // Calculate stats
   const now = Date.now();
@@ -36,9 +66,9 @@ export default function AdminDashboard() {
     t.owners.some(o => o.expiresAt > now)
   );
   const totalArea = activeTerritories.reduce((sum, t) => sum + t.area_m2, 0);
-  const pendingReports = reports.filter(r => r.status === 'pending').length;
+  const pendingReports = reports.filter(r => r.status === 'pending' || r.status === 'open').length;
   const todayReports = reports.filter(r => {
-    const d = new Date(r.timestamp);
+    const d = new Date(r.reportedAt || r.timestamp);
     return d.toDateString() === new Date().toDateString();
   }).length;
   const todayEcoActions = ecoActions.filter(a => {
@@ -83,7 +113,23 @@ export default function AdminDashboard() {
     { id: 'reports', icon: '📋', label: t('admin.reports') },
     { id: 'map', icon: '🗺️', label: t('admin.safety_map') },
     { id: 'analytics', icon: '📈', label: t('admin.analytics') },
+    { id: 'contractors', icon: '🏗️', label: 'Contractor Oversight' },
   ];
+
+  const contractorById = useMemo(() => {
+    const map = new Map();
+    (contractors || []).forEach(c => map.set(c.contractorId, c));
+    return map;
+  }, [contractors]);
+
+  const activeQuestCountByReport = useMemo(() => {
+    const map = new Map();
+    (bountyQuests || []).forEach(q => {
+      if (q.status !== 'active') return;
+      map.set(q.reportId, (map.get(q.reportId) || 0) + 1);
+    });
+    return map;
+  }, [bountyQuests]);
 
   return (
     <div className="admin-page">
@@ -157,7 +203,7 @@ export default function AdminDashboard() {
                       }}
                     />
                   ))}
-                  {reports.filter(r => r.status === 'pending').map(r => (
+                  {reports.filter(r => r.status === 'pending' || r.status === 'open').map(r => (
                     <CircleMarker key={r.id} center={[r.lat, r.lng]} radius={6} pathOptions={{ fillColor: '#ef4444', fillOpacity: 1, color: '#fff', weight: 2 }}>
                       <Popup>{REPORT_ICONS[r.type]} {r.description}</Popup>
                     </CircleMarker>
@@ -169,12 +215,12 @@ export default function AdminDashboard() {
             {/* Recent Reports */}
             <div className="overview-reports-card">
               <h3>Pending Reports ({pendingReports})</h3>
-              {reports.filter(r => r.status === 'pending').slice(0, 3).map(r => (
+              {reports.filter(r => r.status === 'pending' || r.status === 'open').slice(0, 3).map(r => (
                 <div key={r.id} className="mini-report">
                   <span>{REPORT_ICONS[r.type]}</span>
                   <div className="mini-report-info">
                     <span className="mini-report-desc">{r.description || r.type}</span>
-                    <span className="mini-report-time">{new Date(r.timestamp).toLocaleString()}</span>
+                    <span className="mini-report-time">{new Date(r.reportedAt || r.timestamp).toLocaleString()}</span>
                   </div>
                   <span className="mini-report-status" style={{ color: STATUS_COLORS[r.status] }}>●</span>
                 </div>
@@ -210,8 +256,8 @@ export default function AdminDashboard() {
                   <div className="rca-header">
                     <span className="rca-icon">{REPORT_ICONS[r.type]}</span>
                     <div className="rca-info">
-                      <span className="rca-type">{r.type.replace(/_/g, ' ')}</span>
-                      <span className="rca-by">by {r.userName} • {new Date(r.timestamp).toLocaleString()}</span>
+                      <span className="rca-type">{String(r.type).replace(/_/g, ' ')}</span>
+                      <span className="rca-by">by {r.userName} • {new Date(r.reportedAt || r.timestamp).toLocaleString()}</span>
                     </div>
                     <span className="rca-status" style={{ background: STATUS_COLORS[r.status] + '20', color: STATUS_COLORS[r.status] }}>
                       {r.status}
@@ -219,7 +265,18 @@ export default function AdminDashboard() {
                   </div>
                   {r.description && <p className="rca-desc">{r.description}</p>}
                   <div className="rca-location">📍 {r.lat.toFixed(4)}, {r.lng.toFixed(4)}</div>
+                  <div className="rca-meta">
+                    <span>Category: <strong>{r.category || '—'}</strong></span>
+                    <span>SLA: <strong>{r.slaHours ? `${r.slaHours}h` : '—'}</strong></span>
+                    <span>Deadline: <strong>{r.resolutionDeadline ? new Date(r.resolutionDeadline).toLocaleString() : '—'}</strong></span>
+                    {r.assignedTo && <span>Assigned: <strong>{contractorById.get(r.assignedTo)?.name || r.assignedTo}</strong></span>}
+                    {r.status === 'resolved_pending_verification' && (
+                      <span>Quest: <strong>{activeQuestCountByReport.get(r.reportId || r.id) ? 'Active' : 'Created'}</strong></span>
+                    )}
+                    {typeof r.penaltyScore === 'number' && <span>Penalty: <strong>{r.penaltyScore}</strong></span>}
+                  </div>
                   <div className="rca-actions">
+                    {/* Legacy flow */}
                     {r.status === 'pending' && (
                       <>
                         <button className="btn btn-sm btn-primary" onClick={() => updateReportStatus(r.id, 'in_progress')}>
@@ -233,6 +290,43 @@ export default function AdminDashboard() {
                     {r.status === 'in_progress' && (
                       <button className="btn btn-sm btn-primary" onClick={() => updateReportStatus(r.id, 'resolved')}>
                         Mark Resolved
+                      </button>
+                    )}
+                    {/* Service Accountability flow */}
+                    {r.status === 'open' && (
+                      <>
+                        <select
+                          className="input input-sm"
+                          value={assignments[r.reportId || r.id] || ''}
+                          onChange={(e) => setAssignments(prev => ({ ...prev, [r.reportId || r.id]: e.target.value }))}
+                        >
+                          <option value="" disabled>Assign contractor…</option>
+                          {(contractors || []).map(c => (
+                            <option key={c.contractorId} value={c.contractorId}>{c.name}</option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          disabled={!assignments[r.reportId || r.id]}
+                          onClick={() => assignReportToContractor(r.reportId || r.id, assignments[r.reportId || r.id])}
+                        >
+                          Assign
+                        </button>
+                      </>
+                    )}
+                    {r.status === 'assigned' && (
+                      <button className="btn btn-sm btn-primary" onClick={() => markReportResolved(r.reportId || r.id)}>
+                        Mark Resolved
+                      </button>
+                    )}
+                    {r.status === 'resolved_pending_verification' && (
+                      <button className="btn btn-sm btn-ghost" disabled>
+                        Awaiting Verification
+                      </button>
+                    )}
+                    {r.status === 'verified' && (
+                      <button className="btn btn-sm btn-ghost" disabled>
+                        Verified ✅
                       </button>
                     )}
                   </div>
@@ -358,6 +452,11 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* CONTRACTORS TAB */}
+        {activeTab === 'contractors' && (
+          <ContractorDashboard />
         )}
       </div>
     </div>

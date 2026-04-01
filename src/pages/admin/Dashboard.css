@@ -249,6 +249,25 @@
   margin-bottom: 10px;
 }
 
+.rca-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  margin-bottom: 12px;
+}
+
+.rca-meta strong {
+  color: var(--color-text-secondary);
+}
+
+.input.input-sm {
+  height: 34px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
 .rca-actions {
   display: flex;
   gap: 8px;

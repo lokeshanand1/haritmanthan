@@ -8,6 +8,7 @@ export default function BottomNav() {
 
   const items = [
     { path: '/map', icon: '🗺️', label: 'Map' },
+    { path: '/bounties', icon: '🎯', label: 'Bounties' },
     { path: '/leaderboard', icon: '🏆', label: 'Ranks' },
     { path: '/eco-actions', icon: '🌱', label: 'Eco' },
     { path: '/safety', icon: '🛡️', label: 'Safety' },
