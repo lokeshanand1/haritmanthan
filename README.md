@@ -3,7 +3,7 @@
 > **Harit Manthan 2026** – National Hackathon by DDA & Udhmodya Foundation  
 > Problem Statement 2: *Making Public Green Spaces More Engaging and Accessible*
 
-EcoGuardian transforms public park visits into interactive adventures. Users scan QR codes at park entrances, walk through the park to draw territory loops, report maintenance issues, contribute safety ratings, perform eco-actions (watering plants, picking litter), and compete on leaderboards — all while generating actionable spatial data for park management.
+EcoGuardian transforms public park visits into interactive adventures. Users scan QR codes at park entrances, walk through the park to claim territory using **topological geospatial slicing**, report maintenance issues with photos, contribute safety ratings, and interact with **3D Augmented Reality (AR) Eco Pods**—all while generating actionable spatial data for park management.
 
 ## 🚀 Quick Start
 
@@ -25,181 +25,100 @@ npm run build
 | **User** | `demo@ecoguardian.app` | `demo1234` |
 | **Admin** | `admin@ecoguardian.app` | `admin1234` |
 
-Or click **"Quick Demo Login"** / **"Admin Demo"** on the landing page.
+---
 
-## 📱 Features
+## 📱 Core Features
 
-### 1. Polygon Territory Claiming (Walk → Loop → Claim)
-- Scan park QR code → see live leaderboard → enter park
-- GPS tracking with park boundary geofence (GeoJSON polygon)
-- **Walk to draw a trail** — your path is shown as a dashed line on the map
-- **Close the loop** — when you return within ~20m of an earlier point on your path, the enclosed area fills in as your claimed territory
-- Territory is scored by **area in m²** (1 point per 100m²)
-- **Co-ownership**: If your loop overlaps another user's territory, you both become co-owners (shown in purple)
-- **24h expiry**: Return within 24 hours or lose your claim
-- A **gold marker** at your trail start guides you back to close the loop
-- Manual check-in fallback for weak GPS
-- **Simulate Walk** mode for indoor hackathon demos
+### 1. Advanced Territory Claiming (Topological Slicing)
+- **Live Path Drawing**: GPS tracking with geofencing. Your path is a live-drawn dashed line.
+- **Topological Intersections (Turf.js)**: Unlike simple overlaps, we use true geospatial math to slice areas:
+    - 🟢 **Owned**: Your exclusive territory.
+    - 🔵 **Others**: Exclusively claimed by others.
+    - 🟣 **Co-owned**: Precise intersection chunks (dashed purple) where multiple users' loops overlap.
+- **24h Expiry**: Dynamic logic ensures territories remain competitive and active.
+- **Loop Detection**: Haversine distance and Shoelace area calculations for loop closure.
 
-### 2. QR Code Leaderboard Splash
-- Scanning ANY park QR shows the **Top 10 leaderboard** instantly
-- Live visitor count and eco-action statistics
-- Park Champion spotlight with badge
-- Public & motivational — even for non-registered users
+### 2. 3D AR Eco Pod Scanning
+- **Advanced Scanner**: Built-in QR scanner handles JSON, raw IDs, and Deep Links.
+- **3D Visualization**: Using **Three.js (@react-three/fiber)**, users can view detailed AR models of "Pods" (Trees, Benches, Air Quality Sensors).
+- **Gamified Scans**: Scanning physical assets awards points and displays real-time ecological impact data (e.g., CO2 absorption, PM2.5).
 
-### 3. Eco-Actions (Points for Physical Actions)
-- 🌱 Water a Plant (+30 pts)
-- 🗑️ Pick Up Litter (+40 pts)
-- 🌳 Plant a Sapling (+100 pts)
-- 🪑 Clean a Bench (+25 pts)
-- 🐦 Report Wildlife Sighting (+20 pts)
-- Photo proof required for each action
-- Admin approval system
+### 3. Progressive Web App (PWA) Discovery Flow
+- **Zero-friction Flow**: No App Store download required. 
+- **Scan-to-Web**: Physical QR codes in the park open directly in the mobile browser.
+- **Installable**: Full manifest support allowing "Add to Home Screen" for a native app feel.
+- **Offline Ready**: Service Worker support for smooth performance on spotty park Wi-Fi/data.
 
-### 4. Issue Reporting
-- 8 report types (litter, broken bench, dry tree, unsafe lighting, etc.)
-- Camera capture with GPS stamp
-- +50 points per report  
-- Reports sent to DDA dashboard with coordinates, photo, timestamp
+### 4. Women's Safety & Emergency Layer
+- **Safety Rating Grid**: Users contribute to a safety heatmap: Safe ✅ / Neutral 😐 / Unsafe ⚠️.
+- **Emergency SOS**: Immediate "One-Tap" SOS sends live GPS position to security with haptic feedback (vibration).
 
-### 5. Women's Safety Layer
-- Rate zones: Safe ✅ / Neutral 😐 / Unsafe ⚠️
-- Aggregated safety heatmap (green/yellow/red)
-- Emergency SOS button: tap → sends live GPS location to park security
-- Phone vibration alert on activation
+### 5. Issue Reporting & Eco-Actions
+- **Citizen Reporting**: 8 report types with camera capture and GPS stamps (+50 pts).
+- **Eco-Actions**: Log physical acts like watering plants (+30 pts) or picking litter (+40 pts).
+- **Admin Dashboard**: Real-time management for DDA officials to track reports and territory density.
 
-### 6. Gamification
-- Daily challenges (claim 500m² territory, report 2 issues, close 2 loops, etc.)
-- 8 collectible badges (Guardian of the Grove, Safety Scout, Eco Hero, etc.)
-- Weekly leaderboard with podium visualization
-- Social sharing of territory stats
+### 6. Inclusivity & Localization
+- 🌐 **Full Hindi + English**: Seamless toggle for accessibility.
+- 👁️ **Design**: High-contrast dark mode with premium glassmorphism.
 
-### 7. Admin Dashboard (DDA)
-- Live territory map with claimed polygons
-- Safety heatmap overlay
-- Microclimate/cooling zone map
-- Reports management (pending → in-progress → resolved)
-- Analytics: peak hours chart, territory stats, eco impact
-- Top players overview
+---
 
-### 8. Inclusivity & Accessibility
-- 🌐 Hindi + English toggle (full translations)
-- 👁️ High contrast mode for low vision
-- ♿ Screen reader support (ARIA labels)
-- 📴 Offline-ready (Service Worker + localStorage)
-- 📱 Installable PWA
+## 🛠️ Technical Stack
+
+| Category | Technology |
+|-----------|---------|
+| **UI Framework** | React 19 + Vite 8 |
+| **3D Rendering** | Three.js + @react-three/fiber |
+| **Maps** | Leaflet + react-leaflet |
+| **Geospatial Math** | @turf/turf (Intersections & Unions) |
+| **Scanner** | @yudiel/react-qr-scanner |
+| **PWA** | Web Manifest + Service Worker |
+| **State/Auth** | React Context + Simulated Firebase |
+
+---
 
 ## 🏗️ Project Structure
 
-```
+```bash
 haritmanthan/
 ├── public/
 │   ├── manifest.json       # PWA manifest
-│   ├── favicon.svg         # App icon
 │   └── sw.js               # Service worker
 ├── src/
 │   ├── components/
-│   │   ├── BottomNav.jsx   # Bottom navigation
-│   │   └── Toast.jsx       # Toast notifications
+│   │   ├── BottomNav.jsx   # Tab navigation
+│   │   ├── PodModels.jsx   # Three.js 3D/AR component
+│   │   └── Toast.jsx       # Global notifications
 │   ├── context/
-│   │   ├── AuthContext.jsx  # Auth (simulated Firebase)
-│   │   ├── GameContext.jsx  # Territory engine, loop detection, scoring
-│   │   └── LanguageContext.jsx  # i18n (EN/HI)
-│   ├── data/
-│   │   └── parks/
-│   │       └── indraprastha.json  # Park GeoJSON boundary + POIs
-│   ├── i18n/
-│   │   ├── en.json         # English translations
-│   │   └── hi.json         # Hindi translations
+│   │   ├── AuthContext.jsx  # Auth (Simulated)
+│   │   ├── GameContext.jsx  # The "Engine": Loop detection, territory storage
+│   │   └── LanguageContext.jsx # EN/HI Toggle
 │   ├── pages/
-│   │   ├── Landing.jsx     # Entry + auth
-│   │   ├── QRLeaderboard.jsx  # QR scan leaderboard splash
-│   │   ├── ParkMap.jsx     # Main map + territory + trail
-│   │   ├── Report.jsx      # Issue reporting
-│   │   ├── EcoActions.jsx  # Eco-action logging
-│   │   ├── Safety.jsx      # Safety ratings + emergency
-│   │   ├── Leaderboard.jsx # Rankings + challenges + badges
-│   │   ├── Profile.jsx     # User profile + settings
+│   │   ├── ParkMap.jsx      # Leaflet map + Turf.js intersection logic
+│   │   ├── EcoScanner.jsx   # QR Scanner page
+│   │   ├── PodARView.jsx    # AR 3D Experience
+│   │   ├── Safety.jsx       # Safety grid & SOS
 │   │   └── admin/
-│   │       └── Dashboard.jsx  # Admin panel
-│   ├── App.jsx             # Router
-│   ├── main.jsx            # Entry point
-│   └── index.css           # Design system
-├── index.html
-├── vite.config.js
-└── package.json
+│   │       └── Dashboard.jsx # DDA Admin Panel
+│   ├── App.jsx              # Router & Global Layers
+│   └── index.css            # Pro Design System
 ```
 
-## 🛠️ Tech Stack
+---
 
-| Technology | Purpose |
-|-----------|---------|
-| React 18 | UI framework |
-| Vite 8 | Build tool |
-| React Router | Client-side routing |
-| Leaflet + react-leaflet | Interactive maps |
-| Vanilla CSS | Custom design system |
-| localStorage | Offline data persistence |
-| Service Worker | PWA offline support |
-| Geolocation API | GPS tracking |
+## 🧠 Technical Deep Dive: The Geospatial Engine
 
-## 🧠 How Territory Claiming Works
+To solve the complexity of overlapping user territories, we moved away from simple "layering". When two polygons overlap:
+1. **Turf Union**: All your owned polygons are merged into a single geometric feature.
+2. **Turf Intersection**: We calculate `turf.intersect(mine, others)` to derive the "Co-owned" zone.
+3. **Turf Difference**: We use `turf.difference` to subtract the intersection from both layers, ensuring that **rendered pixels never overlap stacks**, which improves performance and visual clarity on mobile devices.
 
-```
-1. User starts walking → GPS positions are recorded as a trail
-2. Trail shown as a dashed green polyline on the map
-3. Gold marker appears at trail start to guide loop closure
-4. When user returns within ~20m of an earlier trail point:
-   → Loop detected (minimum 8 points, minimum 50m² area)
-   → Enclosed polygon is filled as claimed territory (green)
-   → Points awarded: area_m² / 100
-   → If the polygon overlaps another user's territory → co-ownership (purple)
-5. All territories expire after 24 hours if user doesn't return
-```
+---
 
-## 🚢 Deployment
-
-### Vercel (Recommended)
-```bash
-npm install -g vercel
-vercel
-```
-
-### Netlify
-```bash
-npm run build
-# Deploy dist/ folder to Netlify
-```
-
-### Firebase Hosting
-```bash
-npm install -g firebase-tools
-firebase init hosting
-npm run build
-firebase deploy
-```
-
-## 🔄 Scaling to Production
-
-The app is structured for easy migration to real Firebase:
-
-1. Replace `AuthContext.jsx` with Firebase Auth
-2. Replace localStorage in `GameContext.jsx` with Firestore
-3. Add Firebase Storage for photo uploads
-4. Set up Cloud Functions for point validation & loop verification
-5. Add real-time listeners for live territory updates
-
-## 📊 How It Addresses Hackathon Criteria
-
-| Criteria | Implementation |
-|----------|---------------|
-| **Innovation & Technical** | Polygon loop-based territory claiming, Haversine distance, Shoelace area calculation, co-ownership engine |
-| **Feasibility** | Works on any smartphone browser, no hardware needed, free to host |
-| **Prototype Demo** | Simulate Walk mode auto-draws a loop and claims territory live |
-| **Scalability** | Same app works for 100+ parks — just add GeoJSON boundaries |
-| **Impact** | Measurable: footfall heatmaps, safety zones, maintenance reports, eco-actions |
-| **Presentation** | Premium dark theme, glassmorphism, animations, Hindi/English, accessibility |
+## 📊 Impact & Scalability
+- **Actionable Data**: Provides DDA with thermal maps (microclimates) and maintenance heatmaps.
+- **Scalable**: Adding a new park is as simple as dropping a 1KB GeoJSON boundary file in `src/data/parks/`.
 
 ## 📄 License
-
 MIT – Built for Harit Manthan 2026 Hackathon
