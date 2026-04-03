@@ -382,6 +382,41 @@ export function GameProvider({ children }) {
   useEffect(() => { localStorage.setItem('eco_safety', JSON.stringify(safetyRatings)); }, [safetyRatings]);
   useEffect(() => { localStorage.setItem('eco_pods', JSON.stringify(pods)); }, [pods]);
 
+  // On logout: fully reset user state so the demo simulation can be re-run freshly
+  useEffect(() => {
+    const handler = () => {
+      setCurrentPath([]);
+
+      const now = Date.now();
+      const demoTerritories = INITIAL_TERRITORIES.map(t => ({
+        ...t,
+        owners: t.owners.map(o => ({
+          ...o,
+          claimedAt: now - 3600000,
+          expiresAt: now + 24 * 3600000
+        }))
+      }));
+
+      setTerritories(demoTerritories);
+      setUserStats({
+        points: 320,
+        areaClaimed: 1200,
+        loopsCompleted: 2,
+        reportsFiled: 1,
+        ecoActions: 3,
+        safetyRatings: 2,
+        timeInPark: 45,
+        visitCount: 3,
+        badges: ['eco_hero'],
+        challengeProgress: { area: 300, reports: 0, eco_actions: 1, loops: 0, time: 12 },
+      });
+      setIsInsidePark(false);
+      setSessionStart(null);
+    };
+    window.addEventListener('eco:logout', handler);
+    return () => window.removeEventListener('eco:logout', handler);
+  }, []);
+
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);

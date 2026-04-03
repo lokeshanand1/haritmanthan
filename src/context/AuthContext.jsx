@@ -64,8 +64,25 @@ export function AuthProvider({ children }) {
   }, [login]);
 
   const logout = useCallback(() => {
+    let uid;
+    try {
+      const raw = localStorage.getItem('eco_user');
+      if (raw) uid = JSON.parse(raw)?.uid;
+    } catch { }
     setUser(null);
     localStorage.removeItem('eco_user');
+    
+    // Clear game data so the simulation and stats reset completely for a fresh demo run
+    localStorage.removeItem('eco_territories');
+    localStorage.removeItem('eco_stats');
+    localStorage.removeItem('eco_reports');
+    localStorage.removeItem('eco_safety');
+    localStorage.removeItem('eco_pods');
+    localStorage.removeItem('eco_eco_actions');
+
+    try {
+      window.dispatchEvent(new CustomEvent('eco:logout', { detail: { uid } }));
+    } catch { }
   }, []);
 
   return (
